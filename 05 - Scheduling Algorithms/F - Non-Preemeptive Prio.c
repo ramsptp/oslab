@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #define MAX 20
 
 struct process
@@ -36,7 +37,7 @@ int main()
 
     do
     {
-        printf("Enter process upto %d: ", MAX);
+        printf("Enter number of processes (upto %d): ", MAX);
         scanf("%d", &pid);
     } while (pid <= 0 || pid > MAX);
 
@@ -61,24 +62,59 @@ int main()
             min_at = npprio[i].at;
     }
 
-    sort_prio(npprio, pid);
+    int current_time = min_at;
+    int completed = 0;
+    int is_completed[pid];
+    for (i = 0; i < pid; i++)
+        is_completed[i] = 0;
 
-    npprio[0].wt = 0;
-    npprio[0].ct = npprio[0].bt + npprio[0].at;
-    npprio[0].ta = npprio[0].ct - npprio[0].at;
-    float avta = npprio[i].ta, avwt = npprio[i].wt;
+    float avta = 0, avwt = 0;
 
-    for (i = 1; i < pid; i++)
+    while (completed != pid)
     {
-        npprio[i].wt = npprio[i - 1].ct - npprio[i].at;
-        if (npprio[i].wt < 0)
-            npprio[i].wt = 0;
+        int idx = -1;
+        int highest_priority = INT_MAX;
 
-        npprio[i].ct = npprio[i].bt + npprio[i - 1].ct;
-        npprio[i].ta = npprio[i].ct - npprio[i].at;
+        for (i = 0; i < pid; i++)
+        {
+            if (npprio[i].at <= current_time && is_completed[i] == 0)
+            {
+                if (npprio[i].prio < highest_priority)
+                {
+                    highest_priority = npprio[i].prio;
+                    idx = i;
+                }
+                if (npprio[i].prio == highest_priority)
+                {
+                    if (npprio[i].at < npprio[idx].at)
+                    {
+                        highest_priority = npprio[i].prio;
+                        idx = i;
+                    }
+                }
+            }
+        }
 
-        avta += npprio[i].ta;
-        avwt += npprio[i].wt;
+        if (idx != -1)
+        {
+            npprio[idx].wt = current_time - npprio[idx].at;
+            if (npprio[idx].wt < 0)
+                npprio[idx].wt = 0;
+
+            npprio[idx].ct = current_time + npprio[idx].bt;
+            npprio[idx].ta = npprio[idx].ct - npprio[idx].at;
+
+            avta += npprio[idx].ta;
+            avwt += npprio[idx].wt;
+
+            is_completed[idx] = 1;
+            completed++;
+            current_time = npprio[idx].ct;
+        }
+        else
+        {
+            current_time++;
+        }
     }
 
     sort_pid(npprio, pid);
