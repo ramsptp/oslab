@@ -15,14 +15,6 @@ void swap(struct process *a, struct process *b)
     *b = temp;
 }
 
-void sort_prio(struct process arr[], int n)
-{
-    for (int i = 0; i < n - 1; i++)
-        for (int j = 0; j < n - i - 1; j++)
-            if (arr[j].prio > arr[j + 1].prio)
-                swap(&arr[j], &arr[j + 1]);
-}
-
 void sort_pid(struct process arr[], int n)
 {
     for (int i = 0; i < n - 1; i++)
@@ -33,17 +25,14 @@ void sort_pid(struct process arr[], int n)
 
 int main()
 {
-    int pid, i, j, min_at = INT_MAX;
+    int pid, i;
 
-    do
-    {
-        printf("Enter number of processes (upto %d): ", MAX);
-        scanf("%d", &pid);
-    } while (pid <= 0 || pid > MAX);
+    printf("Enter number of processes (upto %d): ", MAX);
+    scanf("%d", &pid);
 
     struct process npprio[pid]; // npprio stands for non-preemptive priority
 
-    printf("Enter Process Details: ");
+    printf("Enter Process Details:\n");
     for (int i = 0; i < pid; i++)
     {
         printf("\nProcess ID: %d", i + 1);
@@ -58,16 +47,12 @@ int main()
         printf("Priority: ");
         scanf("%d", &npprio[i].prio);
 
-        if (min_at > npprio[i].at)
-            min_at = npprio[i].at;
+        // Initialize completion time to zero
+        npprio[i].ct = 0;
     }
 
-    int current_time = min_at;
+    int current_time = 0;
     int completed = 0;
-    int is_completed[pid];
-    for (i = 0; i < pid; i++)
-        is_completed[i] = 0;
-
     float avta = 0, avwt = 0;
 
     while (completed != pid)
@@ -77,21 +62,10 @@ int main()
 
         for (i = 0; i < pid; i++)
         {
-            if (npprio[i].at <= current_time && is_completed[i] == 0)
+            if (npprio[i].at <= current_time && npprio[i].prio < highest_priority && npprio[i].ct == 0)
             {
-                if (npprio[i].prio < highest_priority)
-                {
-                    highest_priority = npprio[i].prio;
-                    idx = i;
-                }
-                if (npprio[i].prio == highest_priority)
-                {
-                    if (npprio[i].at < npprio[idx].at)
-                    {
-                        highest_priority = npprio[i].prio;
-                        idx = i;
-                    }
-                }
+                highest_priority = npprio[i].prio;
+                idx = i;
             }
         }
 
@@ -107,7 +81,6 @@ int main()
             avta += npprio[idx].ta;
             avwt += npprio[idx].wt;
 
-            is_completed[idx] = 1;
             completed++;
             current_time = npprio[idx].ct;
         }
